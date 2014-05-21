@@ -46,9 +46,9 @@ if(!String.prototype.formatNum) {
 		// Initial date. No matter month, week or day this will be a starting point. Can be 'now' or a date in format 'yyyy-mm-dd'
 		day:                'now',
 		// Day Start time and end time with time intervals. Time split 10, 15 or 30.
-		time_start:         '06:00',
-		time_end:           '22:00',
-		time_split:         '30',
+		time_start:         '00:00',
+		time_end:           '23:00',
+		time_split:         '15',
 		// Source of events data. It can be one of the following:
 		// - URL to return JSON list of events in special format.
 		//   {success:1, result: [....]} or for error {success:0, error:'Something terrible happened'}
@@ -128,6 +128,7 @@ if(!String.prototype.formatNum) {
 		// INTERNAL USE ONLY. DO NOT ASSIGN IT WILL BE OVERRIDDEN ANYWAY
 		// -------------------------------------------------------------
 		events:             [],
+
 		templates:          {
 			year:  '',
 			month: '',
@@ -236,7 +237,7 @@ if(!String.prototype.formatNum) {
 		var separator, key, url;
 		url = events_url;
 		separator = (events_url.indexOf('?') < 0) ? '?' : '&';
-		for(key in data) {
+ 		for(key in data) {
 			url += separator + key + '=' + encodeURIComponent(data[key]);
 			separator = '&';
 		}
@@ -699,8 +700,8 @@ if(!String.prototype.formatNum) {
 			this.options.view = view;
 		}
 
-
 		this._init_position();
+		this._loadDays();
 		this._loadEvents();
 		this._render();
 
@@ -834,6 +835,26 @@ if(!String.prototype.formatNum) {
 		return this.options.position.end;
 	}
 
+	Calendar.prototype._loadDays = function() {
+		var self = this;
+		var energies = [];
+		var params = {from: self.options.position.start.getTime(), to: self.options.position.end.getTime()};
+		/*
+		if(browser_timezone.length) {
+			params.browser_timezone = browser_timezone;
+		}
+		*/
+
+		$.ajax({
+			url: _.base + "/.compass/codex.json",
+			data: params,
+			dataType: 'json',
+			type: 'GET',
+			async: false
+		})
+			.done(function(days) { if( !days.empty ) { $.extend( true, _.days, days ); } });
+	}
+
 	Calendar.prototype._loadEvents = function() {
 		var self = this;
 		var source = null;
@@ -860,7 +881,12 @@ if(!String.prototype.formatNum) {
 				if(source.length) {
 					loader = function() {
 						var events = [];
-						var params = {from: self.options.position.start.getTime(), to: self.options.position.end.getTime()};
+						var params = {
+							from: self.options.position.start.getTime(),
+							to: self.options.position.end.getTime(),
+							date: self.options.day,
+							view: self.options.view
+						};
 						if(browser_timezone.length) {
 							params.browser_timezone = browser_timezone;
 						}
@@ -910,7 +936,8 @@ if(!String.prototype.formatNum) {
 			type:     'GET',
 			async:    false,
 			cache:    this.options.tmpl_cache
-		}).done(function(html) {
+		})
+			.done(function(html) {
 				self.options.templates[name] = _.template(html);
 			});
 	};
@@ -1070,7 +1097,7 @@ if(!String.prototype.formatNum) {
 		}
 		var self = this;
 		var activecell = 0;
-		var downbox = $(document.createElement('div')).attr('id', 'cal-day-tick').html('<i class="icon-chevron-down glyphicon glyphicon-chevron-down"></i>');
+		var downbox = $(document.createElement('div')).attr('id', 'cal-day-tick').html('<i class="icon-chevron-down fa fa-chevron-down"></i>');
 
 		$('.cal-month-day, .cal-year-box .span3')
 			.on('mouseenter', function() {
