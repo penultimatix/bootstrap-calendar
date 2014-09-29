@@ -398,10 +398,6 @@
 [class*="cal-cell"]:hover {
   background-color: #ededed;
 }
-.cal-row-head [class*="cal-cell"]:hover {
-  background: transparent;
-}
-
 .cal-year-box [class*="span"],
 .cal-month-box [class*="cal-cell"] {
   min-height: 100px;
@@ -446,10 +442,6 @@ span[data-cal-date] {
   -o-transition: all 0.1s ease-in-out;
   margin-top: 15px;
   margin-right: 15px;
-}
-.cal-month-day span[a4ip] {
-  margin-top: 15px;
-  margin-left: 15px;
 }
 span[data-cal-date]:hover {
   opacity: 1;
