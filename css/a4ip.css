@@ -1,0 +1,49 @@
+.cal-month-day [schedulable] {
+  visibility: hidden;
+}
+
+.cal-month-day:hover [schedulable] {
+  visibility: visible;
+}
+.cal-day-inmonth {
+  color: #fff;
+  background: url('/images/gray777-66.png');
+  background-color: #555;
+}
+.cal-day-outmonth {
+  color: #222;
+  background: url('/images/gray777-66.png')
+}
+.cal-row-fluid:hover:not(.cal-row-head) {
+  background-color: #fafafa;
+}
+.cal-row-head [class*="cal-cell"]:hover {
+  background: transparent;
+}
+.cal-month-day span[a4ip] {
+  margin-top: 15px;
+  margin-left: 15px;
+}
+.cal-day-today {
+  background-color: #000;
+}
+.cal-day-today span[data-cal-date] {
+  color: #fff;
+}
+#cal-slide-content {
+  padding: 20px;
+  color: #111;
+  background-image: url("/images/gray66.png");
+  background-color: #999;
+}
+#cal-slide-tick {
+  background-image: url("/images/tick.png?2");
+}
+#cal-slide-content:hover {
+  background-color: transparent;
+}
+#cal-slide-content a.event-item {
+  color: #111;
+  font-weight: normal;
+  line-height: 22px;
+}

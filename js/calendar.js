@@ -707,13 +707,19 @@ if(!String.prototype.formatNum) {
 			}
 			this.options.view = view;
 		}
+		_.log( "here: " + view )
 
 		this._init_position();
+		_.log( "here 000: " + view )
 		this._loadDays();
+		_.log( "here 001: " + view )
 		this._loadEvents();
+		_.log( "here 002: " + view )
 		this._render();
+		_.log( "here 003: " + view )
 
 		this.options.onAfterViewLoad.call(this, this.options.view);
+		_.log( "here 004: " + view )
 	};
 
 	Calendar.prototype.navigate = function(where, next) {
