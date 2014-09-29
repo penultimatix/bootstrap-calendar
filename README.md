@@ -22,7 +22,7 @@ Why did I start this project? Well, I believe there are no good full view calend
 
 ### Install
 
-You can install it with [bower](http://twitter.github.com/bower/) package manager.
+You can install it with [bower](http://bower.io/) package manager.
 
 	$ bower install bootstrap-calendar
 
@@ -161,20 +161,43 @@ $db    = new PDO('mysql:host=localhost;dbname=testdb;charset=utf8', 'username', 
 $start = $_REQUEST['from'] / 1000;
 $end   = $_REQUEST['to'] / 1000;
 $sql   = sprintf('SELECT * FROM events WHERE `datetime` BETWEEN %s and %s',
-    $db->quote(date('Y-m-d', $start)), $db->quote(date('Y-m-d', $end)))
+    $db->quote(date('Y-m-d', $start)), $db->quote(date('Y-m-d', $end)));
 
-$out = array()
+$out = array();
 foreach($db->query($sql) as $row) {
     $out[] = array(
         'id' => $row->id,
         'title' => $row->name,
         'url' => Helper::url($row->id),
-        'start' => strtotime($row->datetime) . '000'
+        'start' => strtotime($row->datetime) . '000',
+        'end' => strtotime($row->datetime_end) .'000'
     );
 }
 
 echo json_encode(array('success' => 1, 'result' => $out));
 exit;
+```
+
+Another example of PHP script (without connecting with the Database).
+
+```php
+<?php
+$out = array();
+ 
+ for($i=1; $i<=15; $i++){ 	//from day 01 to day 15
+	$data = date('Y-m-d', strtotime("+".$i." days"));
+	$out[] = array(
+     	'id' => $i,
+		'title' => 'Event name '.$i,
+		'url' => Helper::url($id),
+		'class' => 'event-important',
+		'start' => strtotime($data).'000'
+	);
+}
+ 
+echo json_encode(array('success' => 1, 'result' => $out));
+exit;
+?>
 ```
 
 ## Usage warning.
@@ -207,6 +230,24 @@ and then set:
 	modal: "#events-modal"
 
 This will enable the modal, and populate it with an iframe with the contents of event.url .
+
+For Bootstrap v3, use
+
+    <div class="modal fade" id="events-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3>Event</h3>
+                </div>
+                <div class="modal-body" style="height: 400px">
+                </div>
+                <div class="modal-footer">
+                    <a href="#" data-dismiss="modal" class="btn">Close</a>
+                </div>
+            </div>
+        </div>
+    </div>
 
 ### Modal content source
 
