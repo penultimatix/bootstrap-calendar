@@ -119,11 +119,11 @@ if(!String.prototype.formatNum) {
 			// Inside this function 'this' is the calendar instance
 		},
 		onAfterModalShown:  function(events) {
-            		// Inside this function 'this' is the calendar instance
-        	},
-        	onAfterModalHidden:  function(events) {
-            		// Inside this function 'this' is the calendar instance
-        	},
+			// Inside this function 'this' is the calendar instance
+		},
+		onAfterModalHidden: function(events) {
+			// Inside this function 'this' is the calendar instance
+		},
 		// -------------------------------------------------------------
 		// INTERNAL USE ONLY. DO NOT ASSIGN IT WILL BE OVERRIDDEN ANYWAY
 		// -------------------------------------------------------------
@@ -405,9 +405,9 @@ if(!String.prototype.formatNum) {
 
 		// Getting list of days in a week in correct order. Works for month and week views
 		if(getExtentedOption(this, 'first_day') == 1) {
-			data.months = [this.locale.d1, this.locale.d2, this.locale.d3, this.locale.d4, this.locale.d5, this.locale.d6, this.locale.d0]
+			data.days_name = [this.locale.d1, this.locale.d2, this.locale.d3, this.locale.d4, this.locale.d5, this.locale.d6, this.locale.d0]
 		} else {
-			data.months = [this.locale.d0, this.locale.d1, this.locale.d2, this.locale.d3, this.locale.d4, this.locale.d5, this.locale.d6]
+			data.days_name = [this.locale.d0, this.locale.d1, this.locale.d2, this.locale.d3, this.locale.d4, this.locale.d5, this.locale.d6]
 		}
 
 		// Get all events between start and end
@@ -436,24 +436,25 @@ if(!String.prototype.formatNum) {
 
 	Calendar.prototype._calculate_hour_minutes = function(data) {
 		var $self = this;
-		data.in_hour = 60 / parseInt(this.options.time_split);
-		data.hour_split = parseInt(this.options.time_split);
+		var time_split = parseInt(this.options.time_split);
+		var time_split_count = 60 / time_split;
+		var time_split_hour = Math.min(time_split_count, 1);
 
-		if(!/^\d+$/.exec(data.in_hour) || this.options.time_split > 30) {
+		if(((time_split_count >= 1) && (time_split_count % 1 != 0)) || ((time_split_count < 1) && (1440 / time_split % 1 != 0))) {
 			$.error(this.locale.error_timedevide);
 		}
 
 		var time_start = this.options.time_start.split(":");
 		var time_end = this.options.time_end.split(":");
 
-		data.hours = (parseInt(time_end[0]) - parseInt(time_start[0]));
-		var lines = data.hours * data.in_hour;
-		var ms_per_line = (60000 * parseInt(this.options.time_split));
+		data.hours = (parseInt(time_end[0]) - parseInt(time_start[0])) * time_split_hour;
+		var lines = data.hours * time_split_count - parseInt(time_start[1]) / time_split;
+		var ms_per_line = (60000 * time_split);
 
 		var start = new Date(this.options.position.start.getTime());
 		start.setHours(time_start[0]);
 		start.setMinutes(time_start[1]);
-		var end = new Date(this.options.position.start.getTime());
+		var end = new Date(this.options.position.end.getTime());
 		end.setHours(time_end[0]);
 		end.setMinutes(time_end[1]);
 
@@ -501,7 +502,7 @@ if(!String.prototype.formatNum) {
 				e.top = Math.abs(event_start) / ms_per_line;
 			}
 
-			var lines_left = lines - e.top;
+			var lines_left = Math.abs(lines - e.top);
 			var lines_in_event = (e.end - e.start) / ms_per_line;
 			if(event_start >= 0) {
 				lines_in_event = (e.end - start.getTime()) / ms_per_line;
@@ -520,14 +521,21 @@ if(!String.prototype.formatNum) {
 		//warn(d.getTime());
 	};
 
+	Calendar.prototype._hour_min = function(hour) {
+		var time_start = this.options.time_start.split(":");
+		var time_split = parseInt(this.options.time_split);
+		var in_hour = 60 / time_split;
+		return (hour == 0) ? (in_hour - (parseInt(time_start[1]) / time_split)) : in_hour;
+	};
+
 	Calendar.prototype._hour = function(hour, part) {
 		var time_start = this.options.time_start.split(":");
+		var time_split = parseInt(this.options.time_split);
+		var h = "" + (parseInt(time_start[0]) + hour * Math.max(time_split / 60, 1));
+		var m = "" + (time_split * part + ((hour == 0) ? parseInt(time_start[1]) : 0));
 
-		var hour = "" + (parseInt(time_start[0]) + hour);
-		var minute = "" + (this.options.time_split * part);
-
-		return hour.formatNum(2) + ":" + minute.formatNum(2);
-	}
+		return h.formatNum(2) + ":" + m.formatNum(2);
+	};
 
 	Calendar.prototype._week = function(event) {
 		this._loadTemplate('week-days');
@@ -686,7 +694,7 @@ if(!String.prototype.formatNum) {
 				addClass("saturday", classes);
 				break;
 		}
-		
+
 		addClass(date.toDateString(), classes);
 
 		return classes.join(" ");
@@ -896,13 +904,13 @@ if(!String.prototype.formatNum) {
 							type:     'GET',
 							async:    false
 						}).done(function(json) {
-								if(!json.success) {
-									$.error(json.error);
-								}
-								if(json.result) {
-									events = json.result;
-								}
-							});
+							if(!json.success) {
+								$.error(json.error);
+							}
+							if(json.result) {
+								events = json.result;
+							}
+						});
 						return events;
 					};
 				}
@@ -925,13 +933,22 @@ if(!String.prototype.formatNum) {
 		});
 	};
 
+	Calendar.prototype._templatePath = function(name) {
+		if(typeof this.options.tmpl_path == 'function') {
+			return this.options.tmpl_path(name)
+		}
+		else {
+			return this.options.tmpl_path + name + '.html';
+		}
+	};
+
 	Calendar.prototype._loadTemplate = function(name) {
 		if(this.options.templates[name]) {
 			return;
 		}
 		var self = this;
 		$.ajax({
-			url:      this.options.tmpl_path + name + '.html',
+			url:      self._templatePath(name),
 			dataType: 'html',
 			type:     'GET',
 			async:    false,
@@ -941,7 +958,6 @@ if(!String.prototype.formatNum) {
 				self.options.templates[name] = _.template(html);
 			});
 	};
-
 
 	Calendar.prototype._update = function() {
 		var self = this;
@@ -1006,7 +1022,9 @@ if(!String.prototype.formatNum) {
 			}
 
 			if(!modal.data('handled.bootstrap-calendar') || (modal.data('handled.bootstrap-calendar') && modal.data('handled.event-id') != event.id)) {
-				modal
+				modal	.off('show.bs.modal')
+					.off('shown.bs.modal')
+					.off('hidden.bs.modal')
 					.on('show.bs.modal', function() {
 						var modal_body = $(this).find('.modal-body');
 						switch(self.options.modal_type) {
@@ -1034,11 +1052,11 @@ if(!String.prototype.formatNum) {
 						}
 					})
 					.on('shown.bs.modal', function() {
-			                        self.options.onAfterModalShown.call(self, self.options.events);
-			                 })
-		                    	.on('hidden.bs.modal', function() {
-		                        	self.options.onAfterModalHidden.call(self, self.options.events);
-		                    	})
+						self.options.onAfterModalShown.call(self, self.options.events);
+					})
+					.on('hidden.bs.modal', function() {
+						self.options.onAfterModalHidden.call(self, self.options.events);
+					})
 					.data('handled.bootstrap-calendar', true).data('handled.event-id', event.id);
 			}
 			modal.modal('show');
@@ -1130,7 +1148,11 @@ if(!String.prototype.formatNum) {
 	Calendar.prototype.getEventsBetween = function(start, end) {
 		var events = [];
 		$.each(this.options.events, function() {
-			if((parseInt(this.start) < end || this.start == null) && (parseInt(this.end) >= start || this.end == null)) {
+			if(this.start == null) {
+				return true;
+			}
+			var event_end = this.end || this.start;
+			if((parseInt(this.start) < end) && (parseInt(event_end) >= start)) {
 				events.push(this);
 			}
 		});
@@ -1165,14 +1187,18 @@ if(!String.prototype.formatNum) {
 			});
 		});
 
-		$('a.event-item').mouseenter(function() {
-			$('a[data-event-id="' + $(this).data('event-id') + '"]').closest('.cal-cell1').addClass('day-highlight dh-' + $(this).data('event-class'));
-		});
-		$('a.event-item').mouseleave(function() {
-			$('div.cal-cell1').removeClass('day-highlight dh-' + $(this).data('event-class'));
-		});
+	
 
-		self._update_modal();
+		// Wait 400ms before updating the modal & attach the mouseenter&mouseleave(400ms is the time for the slider to fade out and slide up)
+		setTimeout(function() {
+			$('a.event-item').mouseenter(function() {
+				$('a[data-event-id="' + $(this).data('event-id') + '"]').closest('.cal-cell1').addClass('day-highlight dh-' + $(this).data('event-class'));
+			});
+			$('a.event-item').mouseleave(function() {
+				$('div.cal-cell1').removeClass('day-highlight dh-' + $(this).data('event-class'));
+			});
+			self._update_modal();
+		}, 400);
 	}
 
 	function getEasterDate(year, offsetDays) {
