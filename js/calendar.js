@@ -706,6 +706,7 @@ if(!String.prototype.formatNum) {
 				return;
 			}
 			this.options.view = view;
+		}
 
 		this._init_position();
 		this._loadDays();
